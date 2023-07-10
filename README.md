@@ -33,7 +33,12 @@
 - Анализируем банкноту
 - Если валидируется, сохраняем инфо в `bankomat.bin`
 
-### <font color="tomato">Полезная ссылка</font>
+### <font color="tomato">Сниппеты</font>
+
+`getTrimmedString`, `getUserString`, `getRoundedIntWithStep`, `getRandomIntFromRange`, `hasFileExist`,
+`readFromBinaryFile`, `writeToBinaryFile` - находятся в [библиотеке сниппетов](https://github.com/VladislavNovak/16_6_4)
+
+### <font color="tomato">Полезные ссылки</font>
 
 [Read block of data](https://cplusplus.com/reference/istream/istream/read/)
 
