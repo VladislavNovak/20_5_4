@@ -24,19 +24,22 @@
 
 ### <font color="tomato">План действия</font>
 
-- Имеем текущее количество банкнот, которое хранится в файле `bankomat.bin`
-- Считывам текущее состояние. Важно: пусть чтение и запись происходит не в оперативную память
-- Пользователь может производить действия:
-  - снимает
-  - вносит
-  - смотрит баланс
-- Анализируем банкноту
-- Если валидируется, сохраняем инфо в `bankomat.bin`
+1. Данные хранятся в двоичном виде в файле `cash_machine.bin`. 
+2. Если программа ранее не запускалась (и нет файла), тогда первоначальная сумма генерируется в `startOfCashMachine()`
+3. Пользователь может производить действия: снимать, вносить, узнавать баланс
 
 ### <font color="tomato">Сниппеты</font>
 
-`getTrimmedString`, `getUserString`, `getRoundedIntWithStep`, `getRandomIntFromRange`, `hasFileExist`,
-`readFromBinaryFile`, `writeToBinaryFile` - находятся в [библиотеке сниппетов](https://github.com/VladislavNovak/16_6_4)
+getTrimmedString, 
+getUserString, 
+isNumeric, 
+getUserNumeric, 
+getRoundedIntWithStep, 
+getRandomIntFromRange, 
+hasFileExist, 
+readFromBinaryFile, 
+writeToBinaryFile 
+- находятся в [SnippetsLib](https://github.com/VladislavNovak/16_6_4)
 
 ### <font color="tomato">Полезные ссылки</font>
 

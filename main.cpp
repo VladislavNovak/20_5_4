@@ -3,6 +3,7 @@
 #include <cstdlib> // rand, srand
 #include <ctime> // time
 #include <fstream>
+#include <sstream> // stringstream
 #include <string>
 #include <algorithm> // find_if
 #include <vector>
@@ -21,6 +22,23 @@ string getTrimmedString(std::string str, std::string const &whiteSpaces = " \r\n
     return str;
 }
 
+vector<string> getSplitStringOnRecords(string const &str, const char delim = ',', bool isEmptyDenied = true) {
+    vector<string> records;
+    std::stringstream ss(str);
+
+    string rawRecord;
+    // Делим строки на токены по delim
+    while (std::getline(ss, rawRecord, delim)) {
+        string record = getTrimmedString(rawRecord);
+        // Не позволяет добавлять пустой элемент
+        if (record.empty() && isEmptyDenied) continue;
+
+        records.push_back(record);
+    }
+
+    return records;
+}
+
 std::string getUserString(const string &propose) {
     while (true) {
         string userInput;
@@ -33,7 +51,40 @@ std::string getUserString(const string &propose) {
             continue;
         }
 
-        return userInput;
+        return getSplitStringOnRecords(userInput, ' ')[0];
+    }
+}
+
+bool isNumeric(std::string const &str) {
+    auto it = std::find_if(
+            str.begin(),
+            str.end(),
+            [](char const &c) { return !std::isdigit(c); });
+
+    return !str.empty() && it == str.end();
+}
+
+// Если from != to, тогда ввести цифры возможно лишь в диапазоне от from до to
+int getUserNumeric(const string &msg = "Введите цифры", int from = 0, int to = 0) {
+    string warning = "Попробуйте снова. Это должно быть целое число";
+    bool isRange = (from != to);
+
+    while (true) {
+        string userInput = getUserString(msg);
+
+        if (!isNumeric(userInput)) {
+            printf("%s\n", warning.c_str());
+            continue;
+        }
+
+        int num = std::stoi(userInput);
+
+        if (isRange && (num < from || num > to)) {
+            printf("%s в диапазоне (%i - %i)\n", warning.c_str(), from, to);
+            continue;
+        }
+
+        return num;
     }
 }
 
@@ -47,8 +98,15 @@ int getRandomIntFromRange(int from, int to) {
 
 // ранее isFileExist
 bool hasFileExist(const char* path) {
+    bool result = false;
+
     std::ifstream file(path);
-    return file.is_open() && !file.bad();
+
+    if (file.is_open() && !file.bad()) result = true;
+
+    file.close();
+
+    return result;
 }
 
 bool readFromBinaryFile(const char* fileName, string &data) {
@@ -56,7 +114,8 @@ bool readFromBinaryFile(const char* fileName, string &data) {
     const bool FAILURE = false;
 
     std::ifstream fileReader(fileName, std::ios::binary);
-    if (!fileReader.is_open() && fileReader.bad()) {
+
+    if (!hasFileExist(fileName)) {
         fileReader.close();
         return FAILURE;
     }
@@ -108,19 +167,19 @@ int initialization(const char* path) {
 bool startOfCashMachine(const char* path) {
     const bool SUCCESS = true;
     const bool FAILURE = false;
-    const int NEW_FILE_CREATED = 1;
-    string data;
 
     std::cout << "Добро пожаловать и спасибо, что воспользовались нашим банкоматом." << std::endl;
 
     int initializationFlag = initialization(path);
 
-    bool isReadSuccessfully = readFromBinaryFile(path, data);
-
-    if (!isReadSuccessfully) {
+    if (!hasFileExist(path)) {
         std::cout << "Чтение из файла закончилось неудачей. Проверьте файл" << std::endl;
         return FAILURE;
     }
+
+    const int NEW_FILE_CREATED = 1;
+    string data;
+    readFromBinaryFile(path, data);
 
     if (initializationFlag == NEW_FILE_CREATED) {
         std::cout << "Инициализация: в банкомат добавлена сумма в размере: " << data << std::endl;
@@ -131,20 +190,90 @@ bool startOfCashMachine(const char* path) {
     return SUCCESS;
 }
 
+int getUserNumericWithStep(int allowedAmount) {
+    int userEnteredMoney;
+    const int STEP = 100;
+
+    string msg = "Введите сумму с шагом в " + std::to_string(STEP);
+    bool isCorrectAmount = false;
+
+    while (!isCorrectAmount) {
+        userEnteredMoney = getUserNumeric(msg, STEP, allowedAmount);
+        int roundedMoney = getRoundedIntWithStep(userEnteredMoney, STEP);
+
+        if (userEnteredMoney != roundedMoney) {
+            std::cout << "Данную сумму автомат не может принять. Введите круглую сумму." << std::endl;
+            continue;
+        }
+
+        isCorrectAmount = true;
+    }
+
+    return userEnteredMoney;
+}
+
+void showBalance(const char* path) {
+    string data;
+    readFromBinaryFile(path, data);
+
+    std::cout << "У Вас на балансе: " << data << std::endl;
+}
+
+void calculateBalance(const char* path, int limit, bool isAddMode) {
+    int userEnteredMoney;
+    string data;
+
+    readFromBinaryFile(path, data);
+
+    int balance = std::stoi(data);
+
+    if (isAddMode && balance >= limit) {
+        printf("В банкомате максимальное количество денег: %i. Их возможно лишь снять\n", limit);
+        return;
+    }
+
+    if (!isAddMode && balance <= limit) {
+        printf("В банкомате минимальное количество денег: %i. Их возможно лишь добавить\n", limit);
+        return;
+    }
+
+    std::cout << "В банкомате сейчас денег на сумму: " << data << std::endl;
+    int allowedAmount = isAddMode ? limit - balance : balance;
+    userEnteredMoney = getUserNumericWithStep(allowedAmount);
+    int finalCash = isAddMode ? balance + userEnteredMoney : balance - userEnteredMoney;
+
+    writeToBinaryFile(path, std::to_string(finalCash));
+
+    std::cout << "Изменение баланса прошло успешно" << std::endl;
+}
+
+void addToBalance(const char* path) {
+    const int MAX_MONEY = 5000;
+    calculateBalance(path, MAX_MONEY, true);
+}
+
+void decreaseCash(const char* path) {
+    const int MIN_MONEY = 0;
+    calculateBalance(path, MIN_MONEY, false);
+}
+
 string getIndexOfMenu() {
     const char* menu[] = {
-            "нажмите + чтобы добавить сумму",
-            "нажмите - чтобы снять сумму",
-            "введите любой другой знак, чтобы завершить программу"
+            "       +           :чтобы добавить сумму",
+            "       -           :чтобы снять сумму",
+            "       ?           :чтобы снять сумму",
+            "любой другой знак  :чтобы завершить программу"
     };
 
     int sizeOfMenu = std::end(menu) - std::begin(menu);
 
+    std::cout << "------------МЕНЮ------------" << std::endl;
+
     for (int i = 0; i < sizeOfMenu; ++i) {
-        std::cout << i << ": " << menu[i] << std::endl;
+        std::cout << menu[i] << std::endl;
     }
 
-    return getUserString("Введите цифру");
+    return getUserString("Введите тип операции");
 }
 
 int main() {
@@ -160,21 +289,37 @@ int main() {
     bool statusCashMachine = startOfCashMachine(path);
 
     if (!statusCashMachine) {
+        std::cout << "Что-то пошло не так" << std::endl;
         system("pause");
         return 0;
     }
 
     while(true) {
+        system("pause");
+        system("cls");
         char userSelect = getIndexOfMenu()[0];
+
+        if (!hasFileExist(path)) {
+            std::cout << "Чтение из файла закончилось неудачей. Проверьте файл" << std::endl;
+            break;
+        }
 
         switch (userSelect) {
             case '+':
-                break;
+                addToBalance(path);
+                continue;
             case '-':
-                break;
+                decreaseCash(path);
+                continue;
+            case '?':
+                showBalance(path);
+                continue;
             default:
+                showBalance(path);
         }
+
+        break;
     }
 
-    std::cout << "" << std::endl;
+    std::cout << "Завершение программы" << std::endl;
 }
