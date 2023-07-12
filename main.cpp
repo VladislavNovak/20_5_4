@@ -22,7 +22,7 @@ string getTrimmedString(std::string str, std::string const &whiteSpaces = " \r\n
     return str;
 }
 
-vector<string> getSplitStringParts(string const &str, const char delim = ',', bool isEmptyDenied = true) {
+vector<string> getSplitStringOnRecords(string const &str, const char delim = ',', bool isEmptyDenied = true) {
     vector<string> records;
     std::stringstream ss(str);
 
@@ -39,19 +39,19 @@ vector<string> getSplitStringParts(string const &str, const char delim = ',', bo
     return records;
 }
 
-std::string getUserString(const string &msg) {
+std::string getUserLineString(const string &msg) {
     while (true) {
-        string userInput;
+        string userLineString;
         printf("%s: ", msg.c_str());
-        std::getline(std::cin, userInput);
+        std::getline(std::cin, userLineString);
 
-        userInput = getTrimmedString(userInput);
-        if (userInput.empty()) {
+        userLineString = getTrimmedString(userLineString);
+        if (userLineString.empty()) {
             std::cout << "Строка не может быть пустой. Попробуйте снова!" << std::endl;
             continue;
         }
 
-        return getSplitStringParts(userInput, ' ')[0];
+        return userLineString;
     }
 }
 
@@ -70,7 +70,7 @@ int getUserNumeric(const string &msg = "Введите цифры", int from = 0
     bool isRange = (from != to);
 
     while (true) {
-        string userInput = getUserString(msg);
+        string userInput = getSplitStringOnRecords(getUserLineString(msg), ' ')[0];
 
         if (!isNumeric(userInput)) {
             printf("%s\n", warning.c_str());
@@ -270,7 +270,7 @@ string getIndexOfMenu() {
         std::cout << menu[i] << std::endl;
     }
 
-    return getUserString("Введите тип операции");
+    return getSplitStringOnRecords(getUserLineString("Введите тип операции"), ' ')[0];
 }
 
 int main() {
