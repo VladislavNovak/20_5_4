@@ -22,7 +22,7 @@ string getTrimmedString(std::string str, std::string const &whiteSpaces = " \r\n
     return str;
 }
 
-vector<string> getSplitStringOnRecords(string const &str, const char delim = ',', bool isEmptyDenied = true) {
+vector<string> getSplitStringParts(string const &str, const char delim = ',', bool isEmptyDenied = true) {
     vector<string> records;
     std::stringstream ss(str);
 
@@ -39,10 +39,10 @@ vector<string> getSplitStringOnRecords(string const &str, const char delim = ','
     return records;
 }
 
-std::string getUserString(const string &propose) {
+std::string getUserString(const string &msg) {
     while (true) {
         string userInput;
-        printf("%s: ", propose.c_str());
+        printf("%s: ", msg.c_str());
         std::getline(std::cin, userInput);
 
         userInput = getTrimmedString(userInput);
@@ -51,7 +51,7 @@ std::string getUserString(const string &propose) {
             continue;
         }
 
-        return getSplitStringOnRecords(userInput, ' ')[0];
+        return getSplitStringParts(userInput, ' ')[0];
     }
 }
 
@@ -92,32 +92,29 @@ int getRoundedIntWithStep(int val, int step = 10) {
     return (val + step / 2) / step * step;
 }
 
-int getRandomIntFromRange(int from, int to) {
+int getRandomIntInRange(int from, int to) {
     return (from + std::rand() % (to - from + 1)); // NOLINT(cert-msc50-cpp)
 }
 
 // ранее isFileExist
 bool hasFileExist(const char* path) {
-    bool result = false;
+    bool isFileExist = false;
 
     std::ifstream file(path);
 
-    if (file.is_open() && !file.bad()) result = true;
+    if (file.is_open() && !file.bad()) isFileExist = true;
 
     file.close();
 
-    return result;
+    return isFileExist;
 }
 
 bool readFromBinaryFile(const char* fileName, string &data) {
-    const bool SUCCESS = true;
-    const bool FAILURE = false;
-
     std::ifstream fileReader(fileName, std::ios::binary);
 
     if (!hasFileExist(fileName)) {
         fileReader.close();
-        return FAILURE;
+        return false;
     }
 
     fileReader.seekg(0, std::ifstream::end);
@@ -135,7 +132,7 @@ bool readFromBinaryFile(const char* fileName, string &data) {
 
     fileReader.close();
 
-    return SUCCESS;
+    return true;
 }
 
 void writeToBinaryFile(const char* path, const string &data, bool isAppMode = false, const char delim = ';') {
@@ -157,7 +154,7 @@ int initialization(const char* path) {
         return READ_EXISTING_FILE;
 
     // В противном случае генерируем начальное число и записываем зачисляем его в файл с банкоматом
-    int currentCash = getRoundedIntWithStep(getRandomIntFromRange(0, 5000), 100);
+    int currentCash = getRoundedIntWithStep(getRandomIntInRange(0, 5000), 100);
     writeToBinaryFile(path, std::to_string(currentCash));
 
     // возвращаем соответствующий флаг

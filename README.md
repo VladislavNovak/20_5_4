@@ -30,7 +30,8 @@
 
 ### <font color="tomato">Сниппеты</font>
 
-getTrimmedString, 
+getTrimmedString,
+getSplitStringParts, 
 getUserString, 
 isNumeric, 
 getUserNumeric, 
